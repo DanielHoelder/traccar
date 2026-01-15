@@ -26,22 +26,29 @@ public class OpenCellIdGeolocationProvider implements GeolocationProvider {
 
     private final Client client;
     private final String url;
+    private final String defaultKey;
 
     public OpenCellIdGeolocationProvider(Client client, String url, String key) {
         this.client = client;
         if (url == null) {
             url = "http://opencellid.org/cell/get";
         }
-        this.url = url + "?format=json&mcc=%d&mnc=%d&lac=%d&cellid=%d&key=" + key;
+        this.url = url + "?format=json&mcc=%d&mnc=%d&lac=%d&cellid=%d&key=%s";
+        this.defaultKey = key;
     }
 
     @Override
-    public void getLocation(Network network, final LocationProviderCallback callback) {
+    public void getLocation(Network network, String key, final LocationProviderCallback callback) {
+        String actualKey = key != null ? key : defaultKey;
+        if (actualKey == null || actualKey.isEmpty()) {
+            callback.onFailure(new GeolocationException("Geolocation key is not configured"));
+            return;
+        }
         if (network.getCellTowers() != null && !network.getCellTowers().isEmpty()) {
 
             CellTower cellTower = network.getCellTowers().iterator().next();
             String request = String.format(url, cellTower.getMobileCountryCode(), cellTower.getMobileNetworkCode(),
-                    cellTower.getLocationAreaCode(), cellTower.getCellId());
+                    cellTower.getLocationAreaCode(), cellTower.getCellId(), actualKey);
 
             client.target(request).request().async().get(new InvocationCallback<JsonObject>() {
                 @Override

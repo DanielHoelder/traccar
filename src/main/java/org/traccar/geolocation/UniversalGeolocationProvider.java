@@ -26,15 +26,24 @@ public class UniversalGeolocationProvider implements GeolocationProvider {
 
     private final Client client;
     private final String url;
+    private final String defaultKey;
 
     public UniversalGeolocationProvider(Client client, String url, String key) {
         this.client = client;
-        this.url = url + "?key=" + key;
+        this.url = url;
+        this.defaultKey = key;
     }
 
     @Override
-    public void getLocation(Network network, final LocationProviderCallback callback) {
-        client.target(url).request().async().post(Entity.json(network), new InvocationCallback<JsonObject>() {
+    public void getLocation(Network network, String key, final LocationProviderCallback callback) {
+        String actualKey = key != null ? key : defaultKey;
+        if (actualKey == null || actualKey.isEmpty()) {
+            callback.onFailure(new GeolocationException("Geolocation key is not configured"));
+            return;
+        }
+
+        client.target(url).queryParam("key", actualKey).request().async().post(
+                Entity.json(network), new InvocationCallback<JsonObject>() {
             @Override
             public void completed(JsonObject json) {
                 if (json.containsKey("error")) {

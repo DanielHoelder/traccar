@@ -27,6 +27,6 @@ public interface GeolocationProvider {
 
     }
 
-    void getLocation(Network network, LocationProviderCallback callback);
+    void getLocation(Network network, String key, LocationProviderCallback callback);
 
 }

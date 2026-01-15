@@ -23,7 +23,7 @@ public class GeolocationProviderTest extends BaseTest {
 
         Network network = new Network(CellTower.from(208, 1, 2, 1234567));
 
-        provider.getLocation(network, new GeolocationProvider.LocationProviderCallback() {
+        provider.getLocation(network, null, new GeolocationProvider.LocationProviderCallback() {
             @Override
             public void onSuccess(double latitude, double longitude, double accuracy) {
                 assertEquals(60.07254, latitude, 0.00001);

@@ -1764,7 +1764,7 @@ public final class Keys {
      */
     public static final ConfigKey<String> GEOLOCATION_KEY = new StringConfigKey(
             "geolocation.key",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Boolean flag to apply geolocation to invalid positions.

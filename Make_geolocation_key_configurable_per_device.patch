@@ -1,0 +1,200 @@
+Subject: [PATCH] Make geolocation key configurable per device
+---
+Index: src/main/java/org/traccar/config/Keys.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/org/traccar/config/Keys.java b/src/main/java/org/traccar/config/Keys.java
+--- a/src/main/java/org/traccar/config/Keys.java	(revision 369542979cdb46cfd09953c013357cb7da251fd9)
++++ b/src/main/java/org/traccar/config/Keys.java	(revision e6c85b591c46276e73dae15ed64f36c96b7cce6d)
+@@ -1772,7 +1772,7 @@
+      */
+     public static final ConfigKey<String> GEOLOCATION_KEY = new StringConfigKey(
+             "geolocation.key",
+-            List.of(KeyType.CONFIG));
++            List.of(KeyType.CONFIG, KeyType.DEVICE));
+ 
+     /**
+      * Boolean flag to apply geolocation to invalid positions.
+Index: src/main/java/org/traccar/geolocation/GeolocationProvider.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/org/traccar/geolocation/GeolocationProvider.java b/src/main/java/org/traccar/geolocation/GeolocationProvider.java
+--- a/src/main/java/org/traccar/geolocation/GeolocationProvider.java	(revision 369542979cdb46cfd09953c013357cb7da251fd9)
++++ b/src/main/java/org/traccar/geolocation/GeolocationProvider.java	(revision e6c85b591c46276e73dae15ed64f36c96b7cce6d)
+@@ -27,6 +27,6 @@
+ 
+     }
+ 
+-    void getLocation(Network network, LocationProviderCallback callback);
++    void getLocation(Network network, String key, LocationProviderCallback callback);
+ 
+ }
+Index: src/main/java/org/traccar/geolocation/OpenCellIdGeolocationProvider.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/org/traccar/geolocation/OpenCellIdGeolocationProvider.java b/src/main/java/org/traccar/geolocation/OpenCellIdGeolocationProvider.java
+--- a/src/main/java/org/traccar/geolocation/OpenCellIdGeolocationProvider.java	(revision 369542979cdb46cfd09953c013357cb7da251fd9)
++++ b/src/main/java/org/traccar/geolocation/OpenCellIdGeolocationProvider.java	(revision e6c85b591c46276e73dae15ed64f36c96b7cce6d)
+@@ -26,22 +26,29 @@
+ 
+     private final Client client;
+     private final String url;
++    private final String defaultKey;
+ 
+     public OpenCellIdGeolocationProvider(Client client, String url, String key) {
+         this.client = client;
+         if (url == null) {
+             url = "http://opencellid.org/cell/get";
+         }
+-        this.url = url + "?format=json&mcc=%d&mnc=%d&lac=%d&cellid=%d&key=" + key;
++        this.url = url + "?format=json&mcc=%d&mnc=%d&lac=%d&cellid=%d&key=%s";
++        this.defaultKey = key;
+     }
+ 
+     @Override
+-    public void getLocation(Network network, final LocationProviderCallback callback) {
++    public void getLocation(Network network, String key, final LocationProviderCallback callback) {
++        String actualKey = key != null ? key : defaultKey;
++        if (actualKey == null || actualKey.isEmpty()) {
++            callback.onFailure(new GeolocationException("Geolocation key is not configured"));
++            return;
++        }
+         if (network.getCellTowers() != null && !network.getCellTowers().isEmpty()) {
+ 
+             CellTower cellTower = network.getCellTowers().iterator().next();
+             String request = String.format(url, cellTower.getMobileCountryCode(), cellTower.getMobileNetworkCode(),
+-                    cellTower.getLocationAreaCode(), cellTower.getCellId());
++                    cellTower.getLocationAreaCode(), cellTower.getCellId(), actualKey);
+ 
+             client.target(request).request().async().get(new InvocationCallback<JsonObject>() {
+                 @Override
+Index: src/main/java/org/traccar/geolocation/UniversalGeolocationProvider.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/org/traccar/geolocation/UniversalGeolocationProvider.java b/src/main/java/org/traccar/geolocation/UniversalGeolocationProvider.java
+--- a/src/main/java/org/traccar/geolocation/UniversalGeolocationProvider.java	(revision 369542979cdb46cfd09953c013357cb7da251fd9)
++++ b/src/main/java/org/traccar/geolocation/UniversalGeolocationProvider.java	(revision e6c85b591c46276e73dae15ed64f36c96b7cce6d)
+@@ -26,15 +26,24 @@
+ 
+     private final Client client;
+     private final String url;
++    private final String defaultKey;
+ 
+     public UniversalGeolocationProvider(Client client, String url, String key) {
+         this.client = client;
+-        this.url = url + "?key=" + key;
++        this.url = url;
++        this.defaultKey = key;
+     }
+ 
+     @Override
+-    public void getLocation(Network network, final LocationProviderCallback callback) {
+-        client.target(url).request().async().post(Entity.json(network), new InvocationCallback<JsonObject>() {
++    public void getLocation(Network network, String key, final LocationProviderCallback callback) {
++        String actualKey = key != null ? key : defaultKey;
++        if (actualKey == null || actualKey.isEmpty()) {
++            callback.onFailure(new GeolocationException("Geolocation key is not configured"));
++            return;
++        }
++
++        client.target(url).queryParam("key", actualKey).request().async().post(
++                Entity.json(network), new InvocationCallback<JsonObject>() {
+             @Override
+             public void completed(JsonObject json) {
+                 if (json.containsKey("error")) {
+Index: src/main/java/org/traccar/geolocation/UnwiredGeolocationProvider.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/org/traccar/geolocation/UnwiredGeolocationProvider.java b/src/main/java/org/traccar/geolocation/UnwiredGeolocationProvider.java
+--- a/src/main/java/org/traccar/geolocation/UnwiredGeolocationProvider.java	(revision 369542979cdb46cfd09953c013357cb7da251fd9)
++++ b/src/main/java/org/traccar/geolocation/UnwiredGeolocationProvider.java	(revision e6c85b591c46276e73dae15ed64f36c96b7cce6d)
+@@ -33,7 +33,7 @@
+ 
+     private final Client client;
+     private final String url;
+-    private final String key;
++    private final String defaultKey;
+ 
+     private final ObjectMapper objectMapper;
+ 
+@@ -77,7 +77,7 @@
+     public UnwiredGeolocationProvider(Client client, String url, String key) {
+         this.client = client;
+         this.url = url;
+-        this.key = key;
++        this.defaultKey = key;
+ 
+         objectMapper = new ObjectMapper();
+         objectMapper.addMixIn(Network.class, NetworkMixIn.class);
+@@ -86,9 +86,15 @@
+     }
+ 
+     @Override
+-    public void getLocation(Network network, final LocationProviderCallback callback) {
++    public void getLocation(Network network, String key, final LocationProviderCallback callback) {
++        String actualKey = key != null ? key : defaultKey;
++        if (actualKey == null || actualKey.isEmpty()) {
++            callback.onFailure(new GeolocationException("Geolocation key is not configured"));
++            return;
++        }
++
+         ObjectNode json = objectMapper.valueToTree(network);
+-        json.put("token", key);
++        json.put("token", actualKey);
+ 
+         client.target(url).request().async().post(Entity.json(json), new InvocationCallback<JsonObject>() {
+             @Override
+Index: src/main/java/org/traccar/handler/GeolocationHandler.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/org/traccar/handler/GeolocationHandler.java b/src/main/java/org/traccar/handler/GeolocationHandler.java
+--- a/src/main/java/org/traccar/handler/GeolocationHandler.java	(revision 369542979cdb46cfd09953c013357cb7da251fd9)
++++ b/src/main/java/org/traccar/handler/GeolocationHandler.java	(revision e6c85b591c46276e73dae15ed64f36c96b7cce6d)
+@@ -21,6 +21,7 @@
+ import org.traccar.config.Keys;
+ import org.traccar.database.StatisticsManager;
+ import org.traccar.geolocation.GeolocationProvider;
++import org.traccar.helper.model.AttributeUtil;
+ import org.traccar.model.Position;
+ import org.traccar.session.cache.CacheManager;
+ 
+@@ -66,7 +67,9 @@
+                 statisticsManager.registerGeolocationRequest();
+             }
+ 
+-            geolocationProvider.getLocation(position.getNetwork(),
++            String key = AttributeUtil.lookup(cacheManager, Keys.GEOLOCATION_KEY, position.getDeviceId());
++
++            geolocationProvider.getLocation(position.getNetwork(), key,
+                     new GeolocationProvider.LocationProviderCallback() {
+                 @Override
+                 public void onSuccess(double latitude, double longitude, double accuracy) {
+Index: src/test/java/org/traccar/geolocation/GeolocationProviderTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/test/java/org/traccar/geolocation/GeolocationProviderTest.java b/src/test/java/org/traccar/geolocation/GeolocationProviderTest.java
+--- a/src/test/java/org/traccar/geolocation/GeolocationProviderTest.java	(revision 369542979cdb46cfd09953c013357cb7da251fd9)
++++ b/src/test/java/org/traccar/geolocation/GeolocationProviderTest.java	(revision e6c85b591c46276e73dae15ed64f36c96b7cce6d)
+@@ -23,7 +23,7 @@
+ 
+         Network network = new Network(CellTower.from(208, 1, 2, 1234567));
+ 
+-        provider.getLocation(network, new GeolocationProvider.LocationProviderCallback() {
++        provider.getLocation(network, null, new GeolocationProvider.LocationProviderCallback() {
+             @Override
+             public void onSuccess(double latitude, double longitude, double accuracy) {
+                 assertEquals(60.07254, latitude, 0.00001);
