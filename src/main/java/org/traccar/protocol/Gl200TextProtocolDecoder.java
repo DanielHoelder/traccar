@@ -66,6 +66,7 @@ public class Gl200TextProtocolDecoder extends BaseProtocolDecoder {
             Map.entry("2C", "GL300W"),
             Map.entry("2D", "GV500VC"),
             Map.entry("2F", "GV55"),
+            Map.entry("4F", "GV56"),
             Map.entry("30", "GL300"),
             Map.entry("31", "GV65"),
             Map.entry("35", "GV200"),
@@ -434,7 +435,7 @@ public class Gl200TextProtocolDecoder extends BaseProtocolDecoder {
             index += 1; // csq ber
         }
 
-        if (!v[index++].isEmpty()) {
+        if (!model.equals("GL320M") && !v[index++].isEmpty()) {
             int appendMask = Integer.parseInt(v[index - 1]);
             if (BitUtil.check(appendMask, 0)) {
                 position.set(Position.KEY_SATELLITES, Integer.parseInt(v[index++]));
