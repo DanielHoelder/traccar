@@ -38,7 +38,7 @@ public class PortConfigSuffix extends ConfigSuffix<Integer> {
         PORTS.put("progress", 5012);
         PORTS.put("h02", 5013);
         PORTS.put("jt600", 5014);
-        PORTS.put("huabao", 5015);
+        PORTS.put("jt808", 5015);
         PORTS.put("v680", 5016);
         PORTS.put("pt502", 5017);
         PORTS.put("tr20", 5018);
@@ -285,6 +285,7 @@ public class PortConfigSuffix extends ConfigSuffix<Integer> {
         PORTS.put("bws", 5260);
         PORTS.put("ttnhttp", 5261);
         PORTS.put("smartcar", 5262);
+        PORTS.put("jt1078", 5263);
     }
 
     PortConfigSuffix(String key, List<KeyType> types) {

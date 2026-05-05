@@ -17,6 +17,7 @@ package org.traccar.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.traccar.config.Config;
+import org.traccar.config.Keys;
 import org.traccar.model.BaseModel;
 import org.traccar.model.Device;
 import org.traccar.model.Group;
@@ -31,6 +32,7 @@ import jakarta.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -239,6 +241,12 @@ public class DatabaseStorage extends Storage {
         } else if (genericCondition instanceof Condition.LatestPositions condition) {
             if (condition.getDeviceId() > 0) {
                 results.add(condition.getDeviceId());
+                results.add(condition.getDeviceId());
+            } else {
+                long period = config.getLong(Keys.DATABASE_POSITION_PERIOD);
+                if (period > 0) {
+                    results.add(new Date(System.currentTimeMillis() - period * 1000));
+                }
             }
         }
         return results;
@@ -300,6 +308,14 @@ public class DatabaseStorage extends Storage {
 
             } else if (genericCondition instanceof Condition.LatestPositions condition) {
 
+                if (condition.getDeviceId() > 0) {
+                    result.append("deviceId = ? AND ");
+                } else {
+                    long period = config.getLong(Keys.DATABASE_POSITION_PERIOD);
+                    if (period > 0) {
+                        result.append("fixTime > ? AND ");
+                    }
+                }
                 result.append("id IN (");
                 result.append("SELECT positionId FROM ");
                 result.append(getStorageName(Device.class));

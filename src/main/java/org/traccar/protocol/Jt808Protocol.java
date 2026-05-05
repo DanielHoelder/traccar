@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2024 Anton Tananaev (anton@traccar.org)
+ * Copyright 2015 - 2026 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import org.traccar.model.Command;
 
 import jakarta.inject.Inject;
 
-public class HuabaoProtocol extends BaseProtocol {
+public class Jt808Protocol extends BaseProtocol {
 
     @Inject
-    public HuabaoProtocol(Config config) {
+    public Jt808Protocol(Config config) {
         setSupportedDataCommands(
                 Command.TYPE_CUSTOM,
                 Command.TYPE_REBOOT_DEVICE,
@@ -34,14 +34,16 @@ public class HuabaoProtocol extends BaseProtocol {
                 Command.TYPE_ALARM_ARM,
                 Command.TYPE_ALARM_DISARM,
                 Command.TYPE_ENGINE_STOP,
-                Command.TYPE_ENGINE_RESUME);
+                Command.TYPE_ENGINE_RESUME,
+                Command.TYPE_VIDEO_START,
+                Command.TYPE_VIDEO_STOP);
         addServer(new TrackerServer(config, getName(), false) {
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline, Config config) {
-                pipeline.addLast(new HuabaoFrameEncoder());
-                pipeline.addLast(new HuabaoFrameDecoder());
-                pipeline.addLast(new HuabaoProtocolEncoder(HuabaoProtocol.this));
-                pipeline.addLast(new HuabaoProtocolDecoder(HuabaoProtocol.this));
+                pipeline.addLast(new Jt808FrameEncoder());
+                pipeline.addLast(new Jt808FrameDecoder());
+                pipeline.addLast(new Jt808ProtocolEncoder(Jt808Protocol.this));
+                pipeline.addLast(new Jt808ProtocolDecoder(Jt808Protocol.this));
             }
         });
     }

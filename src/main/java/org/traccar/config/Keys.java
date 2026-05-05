@@ -206,6 +206,37 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * Speed units for the protocol. Possible values: knots (default), kmh, mps, mph.
+     */
+    public static final ConfigSuffix<String> PROTOCOL_SPEED = new StringConfigSuffix(
+            ".speed",
+            List.of(KeyType.CONFIG));
+
+    /**
+     * Custom format string 0 for GlobalSat protocol.
+     */
+    public static final ConfigSuffix<String> PROTOCOL_FORMAT_0 = new StringConfigSuffix(
+            ".format0",
+            List.of(KeyType.CONFIG),
+            "TSPRXAB27GHKLMnaicz*U!");
+
+    /**
+     * Custom format string 1 for GlobalSat protocol.
+     */
+    public static final ConfigSuffix<String> PROTOCOL_FORMAT_1 = new StringConfigSuffix(
+            ".format1",
+            List.of(KeyType.CONFIG),
+            "SARY*U!");
+
+    /**
+     * Custom report columns for Genx protocol.
+     */
+    public static final ConfigSuffix<String> PROTOCOL_REPORT_COLUMNS = new StringConfigSuffix(
+            ".reportColumns",
+            List.of(KeyType.CONFIG),
+            "1,2,3,4");
+
+    /**
      * Protocol type for Suntech.
      */
     public static final ConfigKey<Integer> PROTOCOL_TYPE = new IntegerConfigKey(
@@ -396,6 +427,31 @@ public final class Keys {
             0.0);
 
     /**
+     * Distance in meters at which a linked device entering this range triggers a proximity enter event. 0 to disable.
+     */
+    public static final ConfigKey<Double> EVENT_PROXIMITY_ENTER_DISTANCE = new DoubleConfigKey(
+            "proximityEnterDistance",
+            List.of(KeyType.DEVICE),
+            0.0);
+
+    /**
+     * Distance in meters at which a linked device leaving this range triggers a proximity exit event. 0 to disable.
+     */
+    public static final ConfigKey<Double> EVENT_PROXIMITY_EXIT_DISTANCE = new DoubleConfigKey(
+            "proximityExitDistance",
+            List.of(KeyType.DEVICE),
+            0.0);
+
+    /**
+     * Distance in meters that defines "near" for the unaccompanied motion event. If the device starts moving with no
+     * linked device within this distance, an event is generated. 0 to disable.
+     */
+    public static final ConfigKey<Double> EVENT_UNACCOMPANIED_DISTANCE = new DoubleConfigKey(
+            "unaccompaniedDistance",
+            List.of(KeyType.DEVICE),
+            0.0);
+
+    /**
      * Disable device sharing on the server.
      */
     public static final ConfigKey<Boolean> DEVICE_SHARE_DISABLE = new BooleanConfigKey(
@@ -563,6 +619,14 @@ public final class Keys {
     public static final ConfigKey<String> DATABASE_REGISTER_UNKNOWN_REGEX = new StringConfigKey(
             "database.registerUnknown.regex",
             List.of(KeyType.CONFIG), "\\w{3,15}");
+
+    /**
+     * Limit latest position queries to a certain time period in seconds. This is useful for TimescaleDB
+     * to avoid scanning all time chunks. Default value is 7776000 seconds (90 days). Zero value disables the limit.
+     */
+    public static final ConfigKey<Long> DATABASE_POSITION_PERIOD = new LongConfigKey(
+            "database.positionPeriod",
+            List.of(KeyType.CONFIG), 7776000L);
 
     /**
      * Store empty messages as positions. For example, heartbeats.
@@ -1484,7 +1548,7 @@ public final class Keys {
      */
     public static final ConfigKey<Boolean> FILTER_INVALID = new BooleanConfigKey(
             "filter.invalid",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter zero coordinates. Zero latitude and longitude are theoretically valid values, but in practice they
@@ -1492,14 +1556,14 @@ public final class Keys {
      */
     public static final ConfigKey<Boolean> FILTER_ZERO = new BooleanConfigKey(
             "filter.zero",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter duplicate records (duplicates are detected by time value).
      */
     public static final ConfigKey<Boolean> FILTER_DUPLICATE = new BooleanConfigKey(
             "filter.duplicate",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter messages that do not have GPS location. If they are not filtered, they will include the last known
@@ -1507,7 +1571,7 @@ public final class Keys {
      */
     public static final ConfigKey<Boolean> FILTER_OUTDATED = new BooleanConfigKey(
             "filter.outdated",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter records with fix time in the future. The value is specified in seconds. Records that have fix time more
@@ -1515,7 +1579,7 @@ public final class Keys {
      */
     public static final ConfigKey<Long> FILTER_FUTURE = new LongConfigKey(
             "filter.future",
-            List.of(KeyType.CONFIG),
+            List.of(KeyType.CONFIG, KeyType.DEVICE),
             86400L);
 
     /**
@@ -1524,28 +1588,28 @@ public final class Keys {
      */
     public static final ConfigKey<Long> FILTER_PAST = new LongConfigKey(
             "filter.past",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter positions with accuracy less than specified value in meters.
      */
     public static final ConfigKey<Integer> FILTER_ACCURACY = new IntegerConfigKey(
             "filter.accuracy",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter cell and wifi locations that are coming from geolocation provider.
      */
     public static final ConfigKey<Boolean> FILTER_APPROXIMATE = new BooleanConfigKey(
             "filter.approximate",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter positions with exactly zero speed values.
      */
     public static final ConfigKey<Boolean> FILTER_STATIC = new BooleanConfigKey(
             "filter.static",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter records by distance. The value is specified in meters. If the new position is closer than this value to
@@ -1553,7 +1617,7 @@ public final class Keys {
      */
     public static final ConfigKey<Integer> FILTER_DISTANCE = new IntegerConfigKey(
             "filter.distance",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter records by Maximum Speed value in knots. Can be used to filter jumps to far locations even if Position
@@ -1563,39 +1627,28 @@ public final class Keys {
      */
     public static final ConfigKey<Integer> FILTER_MAX_SPEED = new IntegerConfigKey(
             "filter.maxSpeed",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Filter position if time from previous position is less than specified value in seconds.
      */
     public static final ConfigKey<Integer> FILTER_MIN_PERIOD = new IntegerConfigKey(
             "filter.minPeriod",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Throttle positions if the daily limit is exceeded for the device.
      */
     public static final ConfigKey<Integer> FILTER_DAILY_LIMIT = new IntegerConfigKey(
             "filter.dailyLimit",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Throttling interval if the limit is exceeded. The value is in seconds.
      */
     public static final ConfigKey<Integer> FILTER_DAILY_LIMIT_INTERVAL = new IntegerConfigKey(
             "filter.dailyLimitInterval",
-            List.of(KeyType.CONFIG));
-
-    /**
-     * If false, the server expects all locations to come sequentially (for each device). Filter checks for duplicates,
-     * distance, speed, or time period only against the location that was last received by the server.
-     * If true, the server expects locations to come in random order (since a tracking device might go offline).
-     * Filter checks for duplicates, distance, speed, or time period against the preceding position.
-     * Important: setting this to true can cause potential performance issues.
-     */
-    public static final ConfigKey<Boolean> FILTER_RELATIVE = new BooleanConfigKey(
-            "filter.relative",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Time limit for filtering in seconds. If the time difference between when the last position was received by the
@@ -1604,7 +1657,7 @@ public final class Keys {
      */
     public static final ConfigKey<Long> FILTER_SKIP_LIMIT = new LongConfigKey(
             "filter.skipLimit",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Enable attributes skipping. Attribute skipping can be enabled in the config or device attributes.
@@ -1612,7 +1665,7 @@ public final class Keys {
      */
     public static final ConfigKey<Boolean> FILTER_SKIP_ATTRIBUTES_ENABLE = new BooleanConfigKey(
             "filter.skipAttributes.enable",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG, KeyType.DEVICE));
 
     /**
      * Attribute skipping can be enabled in the config or device attributes.

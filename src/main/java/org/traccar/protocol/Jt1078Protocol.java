@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Anton Tananaev (anton@traccar.org)
+ * Copyright 2026 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,15 @@ import org.traccar.config.Config;
 
 import jakarta.inject.Inject;
 
-public class SolarPoweredProtocol extends BaseProtocol {
+public class Jt1078Protocol extends BaseProtocol {
 
     @Inject
-    public SolarPoweredProtocol(Config config) {
+    public Jt1078Protocol(Config config) {
         addServer(new TrackerServer(config, getName(), false) {
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline, Config config) {
-                pipeline.addLast(new Jt808FrameDecoder());
-                pipeline.addLast(new SolarPoweredProtocolDecoder(SolarPoweredProtocol.this));
+                pipeline.addLast(new Jt1078FrameDecoder());
+                pipeline.addLast(new Jt1078ProtocolDecoder(Jt1078Protocol.this));
             }
         });
     }
