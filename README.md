@@ -4,8 +4,8 @@
 
 This version of the Traccar Server allows separate geolocation API keys to be entered for each device.
 
-    Enable geolocation in the configuration file and specify the geolocation service
-    Instead of adding the geolocation API key to the config file, add it as an attribute (geolocation.key) to the device
+- Enable geolocation in the configuration file and specify the geolocation service
+- Instead of adding the geolocation API key to the config file, add it as an attribute (geolocation.key) to the device
 
 
 ## Overview
