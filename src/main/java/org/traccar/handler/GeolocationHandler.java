@@ -21,6 +21,7 @@ import org.traccar.config.Config;
 import org.traccar.config.Keys;
 import org.traccar.database.StatisticsManager;
 import org.traccar.geolocation.GeolocationProvider;
+import org.traccar.helper.model.AttributeUtil;
 import org.traccar.model.Position;
 import org.traccar.session.cache.CacheManager;
 
@@ -66,7 +67,9 @@ public class GeolocationHandler extends BasePositionHandler {
                 statisticsManager.registerGeolocationRequest();
             }
 
-            geolocationProvider.getLocation(position.getNetwork(),
+            String key = AttributeUtil.lookup(cacheManager, Keys.GEOLOCATION_KEY, position.getDeviceId());
+
+            geolocationProvider.getLocation(position.getNetwork(), key,
                     new GeolocationProvider.LocationProviderCallback() {
                 @Override
                 public void onSuccess(double latitude, double longitude, double accuracy) {

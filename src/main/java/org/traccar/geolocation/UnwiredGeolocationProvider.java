@@ -33,7 +33,7 @@ public class UnwiredGeolocationProvider implements GeolocationProvider {
 
     private final Client client;
     private final String url;
-    private final String key;
+    private final String defaultKey;
 
     private final ObjectMapper objectMapper;
 
@@ -77,7 +77,7 @@ public class UnwiredGeolocationProvider implements GeolocationProvider {
     public UnwiredGeolocationProvider(Client client, String url, String key) {
         this.client = client;
         this.url = url;
-        this.key = key;
+        this.defaultKey = key;
 
         objectMapper = new ObjectMapper();
         objectMapper.addMixIn(Network.class, NetworkMixIn.class);
@@ -86,9 +86,15 @@ public class UnwiredGeolocationProvider implements GeolocationProvider {
     }
 
     @Override
-    public void getLocation(Network network, final LocationProviderCallback callback) {
+    public void getLocation(Network network, String key, final LocationProviderCallback callback) {
+        String actualKey = key != null ? key : defaultKey;
+        if (actualKey == null || actualKey.isEmpty()) {
+            callback.onFailure(new GeolocationException("Geolocation key is not configured"));
+            return;
+        }
+
         ObjectNode json = objectMapper.valueToTree(network);
-        json.put("token", key);
+        json.put("token", actualKey);
 
         client.target(url).request().async().post(Entity.json(json), new InvocationCallback<JsonObject>() {
             @Override
