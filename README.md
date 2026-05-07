@@ -1,5 +1,13 @@
 # [Traccar](https://www.traccar.org)
 
+## Geolocation API key per device
+
+This version of the Traccar Server allows separate geolocation API keys to be entered for each device.
+
+    Enable geolocation in the configuration file and specify the geolocation service
+    Instead of adding the geolocation API key to the config file, add it as an attribute (geolocation.key) to the device
+
+
 ## Overview
 
 Traccar is an open source GPS tracking system. This repository contains Java-based back-end service. It supports more than 200 GPS protocols and more than 2000 models of GPS tracking devices. Traccar can be used with any major SQL database system. It also provides easy to use [REST API](https://www.traccar.org/traccar-api/).
